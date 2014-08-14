@@ -1,0 +1,31 @@
+# Numerous always-ignore extensions
+*.diff
+*.err
+*.orig
+*.log
+*~
+
+# Folders to ignore
+.cache/
+bin/
+gen/
+env/
+build/
+tmp/
+eggs/
+lib/
+lib64/
+var/
+node_modules/
+npm-debug.log/
+
+# Generated files to ignore
+*.out
+*.o
+*.so
+*.class
+*.pyc
+*.log
+*.meteor
+
+# Project stuff
