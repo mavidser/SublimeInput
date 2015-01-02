@@ -1,9 +1,3 @@
-'''input
-3
-3
-4
-5
-'''
 import sublime, sublime_plugin
 import subprocess
 import threading
@@ -135,7 +129,7 @@ class AsyncProcess(object):
         break
 
 
-class InputCommand(sublime_plugin.TextCommand, ProcessListener):
+class SublimeInputCommand(sublime_plugin.TextCommand, ProcessListener):
   def run(self, cmd = None, shell_cmd = None, file_regex = "", line_regex = "", working_dir = "",
           encoding = "utf-8", env = {}, quiet = False, kill = False,
           word_wrap = True, syntax = "Packages/Text/Plain text.tmLanguage",
@@ -146,22 +140,24 @@ class InputCommand(sublime_plugin.TextCommand, ProcessListener):
     filetype = file_name[file_name.rfind('.') + 1:]
     file_name_only = file_name[file_name.rfind('/')+1:file_name.rfind('.')]
     working_dir = file_name[:file_name.rfind('/')+1]
+    user_input = ''
+    try:
+      settings = sublime.load_settings("SublimeInput.sublime-settings")
+      shell_cmd = settings.get('build_schemas')[filetype]['shell_cmd']
+      input_start = settings.get('build_schemas')[filetype]['input_start']
+      input_end = settings.get('build_schemas')[filetype]['input_end']
+      shell_cmd = shell_cmd.replace('${file}',file_name)
+      shell_cmd = shell_cmd.replace('${file_path}',working_dir)
+      shell_cmd = shell_cmd.replace('${file_base_name}',file_name_only)
+      shell_cmd = shell_cmd.replace('${file_extension}',filetype)
 
-    settings = sublime.load_settings("SublimeInput.sublime-settings")
-    shell_cmd = settings.get('build_schemas')[filetype]['shell_cmd']
-    input_start = settings.get('build_schemas')[filetype]['input_start']
-    input_end = settings.get('build_schemas')[filetype]['input_end']
-    shell_cmd = shell_cmd.replace('${file}',file_name)
-    shell_cmd = shell_cmd.replace('${file_path}',working_dir)
-    shell_cmd = shell_cmd.replace('${file_base_name}',file_name_only)
-    shell_cmd = shell_cmd.replace('${file_extension}',filetype)
+      line = self.view.substr(sublime.Region(0, self.view.size()))
 
-    line = self.view.substr(sublime.Region(0, self.view.size()))
+      comment_regex = re.escape(input_start) + "\\s*\n.*?\n" + re.escape(input_end)
+      user_input = re.match(comment_regex, line, flags=re.S).group(0)[len(input_start)+1:-(len(input_end)+1)]
+    except:
+      pass
 
-    comment_regex = re.escape(input_start) + "\\s*\n.*?\n" + re.escape(input_end)
-    user_input = re.match(comment_regex, line, flags=re.S).group(0)[len(input_start)+1:-(len(input_end)+1)]
-
-    print(user_input)
     if kill:
       if self.proc:
         self.proc.kill()
@@ -292,3 +288,11 @@ class InputCommand(sublime_plugin.TextCommand, ProcessListener):
 
   def on_finished(self, proc):
     sublime.set_timeout(functools.partial(self.finish, proc), 0)
+
+class CancelSublimeInputCommand(sublime_plugin.TextCommand, ProcessListener):
+  def run(self, cmd = None, shell_cmd = None, file_regex = "", line_regex = "", working_dir = "",
+          encoding = "utf-8", env = {}, quiet = False, kill = False,
+          word_wrap = True, syntax = "Packages/Text/Plain text.tmLanguage",
+          # Catches "path" and "shell"
+          **kwargs):
+    self.view.run_command("sublime_input", {"kill":True})
