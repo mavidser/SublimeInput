@@ -1,6 +1,15 @@
 # SublimeInput
 SublimeInput is a Sublime Text 3 plugin which gives STDIN input through comments to a program.
 
+## Installation
+To Install:
+
+1. Open Sublime Text 3
+2. Go to Preferences | Browse Packages
+3. Browse up a folder and then into the Installed Packages/ folder
+4. [Downlad and Copy the `SublimeInput.sublime-package` file](http://github.com/mavidser/SublimeInput/releases/download/2.0.1/SublimeInput.sublime-package)
+5. Restart Sublime Text
+
 ## Usage
 Insert a multi-line comment at the top of program.
 
