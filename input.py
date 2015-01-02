@@ -145,21 +145,32 @@ class SublimeInputCommand(sublime_plugin.TextCommand, ProcessListener):
           word_wrap = True, syntax = "Packages/Text/Plain text.tmLanguage",
           # Catches "path" and "shell"
           **kwargs):
+    def quote_filename(filename):
+      return '%s' % (
+          filename
+          .replace('\\', '\\\\')
+          .replace('"', '\\"')
+          .replace('$', '\\$')
+          .replace('`', '\\`')
+      )
     self.window = self.view.window()
     file_name = self.view.file_name()
     filetype = file_name[file_name.rfind('.') + 1:]
     file_name_only = file_name[file_name.rfind('/')+1:file_name.rfind('.')]
     working_dir = file_name[:file_name.rfind('/')+1]
+    file_name_sanitized = quote_filename(file_name)
+    working_dir_sanitized = quote_filename(working_dir)
+    print(file_name,filetype, file_name_only, working_dir)
     user_input = ''
     try:
       settings = sublime.load_settings("SublimeInput.sublime-settings")
       shell_cmd = settings.get('build_schemas')[filetype]['shell_cmd']
       input_start = settings.get('build_schemas')[filetype]['input_start']
       input_end = settings.get('build_schemas')[filetype]['input_end']
-      shell_cmd = shell_cmd.replace('${file}',file_name)
-      shell_cmd = shell_cmd.replace('${file_path}',working_dir)
-      shell_cmd = shell_cmd.replace('${file_base_name}',file_name_only)
-      shell_cmd = shell_cmd.replace('${file_extension}',filetype)
+      shell_cmd = shell_cmd.replace('${file}',file_name_sanitized)\
+                           .replace('${file_path}',working_dir_sanitized)\
+                           .replace('${file_base_name}',file_name_only)\
+                           .replace('${file_extension}',filetype)
 
       line = self.view.substr(sublime.Region(0, self.view.size()))
 
