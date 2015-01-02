@@ -2,19 +2,19 @@
   "build_schemas" : {
     
     "py" : {
-      "shell_cmd" : "python -u ${file}",
+      "shell_cmd" : "python -u \"${file}\"",
       "input_start" : "'''input",
       "input_end" : "'''"
     },
 
     "cpp" : {
-      "shell_cmd" : "g++ ${file} -o ${file_path}/${file_base_name} && ${file_path}/${file_base_name}",
+      "shell_cmd" : "g++ \"${file}\" -o \"${file_path}/${file_base_name}\" && \"${file_path}/${file_base_name}\"",
       "input_start" : "/*input",
       "input_end" : "*/"
     },
 
     "c" : {
-      "shell_cmd" : "gcc ${file} -o ${file_path}/${file_base_name} && ${file_path}/${file_base_name}",
+      "shell_cmd" : "gcc \"${file}\" -o \"${file_path}/${file_base_name}\" && \"${file_path}/${file_base_name}\"",
       "input_start" : "/*input",
       "input_end" : "*/"
     }
