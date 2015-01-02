@@ -129,13 +129,21 @@ class AsyncProcess(object):
         break
 
 
-class ExecuteCommand(sublime_plugin.WindowCommand, ProcessListener):
+class InputCommand(sublime_plugin.TextCommand, ProcessListener):
   def run(self, cmd = None, shell_cmd = None, file_regex = "", line_regex = "", working_dir = "",
           encoding = "utf-8", env = {}, quiet = False, kill = False,
           word_wrap = True, syntax = "Packages/Text/Plain text.tmLanguage",
           # Catches "path" and "shell"
           **kwargs):
-
+    self.window = self.view.window()
+    self.file_name = self.view.file_name()
+    self.filetype = self.file_name[self.file_name.rfind('.') + 1:]
+    print("a",self.filetype)
+    
+    self.file_name_only = self.file_name[:self.file_name.rfind('.')]
+    
+    working_dir = self.file_name[:self.file_name.rfind('/')+1]
+    print("a",working_dir)
     if kill:
       if self.proc:
         self.proc.kill()
@@ -268,7 +276,7 @@ class ExecuteCommand(sublime_plugin.WindowCommand, ProcessListener):
     sublime.set_timeout(functools.partial(self.finish, proc), 0)
 
 
-class InputCommand(sublime_plugin.TextCommand):
+class InputtCommand(sublime_plugin.TextCommand):
   def run(self, edit):
     file_name = self.view.file_name()
 
@@ -330,13 +338,40 @@ class InputCommand(sublime_plugin.TextCommand):
         output = self.view.window().create_output_panel('op')
         output.run_command('erase_view')
         try:
-          result = subprocess.check_output('echo "' + user_input + '" | python ' + file_name,
+          echo_input = subprocess.Popen('echo "' + user_input + '"', 
+                                          stderr=subprocess.STDOUT,
+                                          stdout=subprocess.PIPE,
+                                          shell=True)
+          result = subprocess.Popen('python ' + file_name,
+                                           stdin=echo_input.stdout,
                                            stderr=subprocess.STDOUT,
+                                           stdout=subprocess.PIPE,
                                            shell=True)
-          output.run_command('append', {'characters': result.decode(sys.getfilesystemencoding())})
+
+          while True:
+            data = os.read(result.stdout.fileno(), 2**15)
+            if len(data) > 0:
+              output.run_command('append', {'characters': data.decode('utf-8')})
+              # if self.listener:
+              #   on_data(self, data)
+            else:
+              # self.proc.stdout.close()
+              # if self.listener:
+              #   on_finished(self)
+              break
+          # while True:
+          #   out = result.stdout.read(1)
+          #   if out == b'' and result.poll() != None:
+          #     break
+          #   if out != '':
+          #     output.run_command('append', {'characters': out.decode('utf-8')})
         except subprocess.CalledProcessError as err:
           print(err.returncode, err.output.decode(sys.getfilesystemencoding()))
           output.run_command('append', {'characters': err.output.decode(sys.getfilesystemencoding())})
         self.view.window().run_command("show_panel", {"panel": "output.op"})
       except AttributeError as err:
         print(err)
+
+# class InputCommand(sublime_plugin.WindowCommand, ProcessListener):
+#   def run(self, shell_cmd = None, file_regex = "", selector = ""):
+#     self.window.run_command("build", {"shell_cmd":"python -u \"test.py\"","file_regex":"^[ ]*File \"(...*?)\", line ([0-9]*)"})
