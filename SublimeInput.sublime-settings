@@ -1,0 +1,23 @@
+{
+  "fdsf": "fsef",
+  "build_schemas" : {
+    "py" : {
+      "shell_cmd" : "python -u ${file}",
+      "input_start" : "'''input",
+      "input_end" : "'''",
+      "comment_regex" : "'''input\\s*\n.*?\n'''"
+    },
+    "cpp" : {
+      "shell_cmd" : "g++ ${file} -o ${file_path}/${file_base_name} && ${file_path}/${file_base_name}",
+      "input_start" : "/*input",
+      "input_end" : "*/",
+      "comment_regex" : "'''input\\s*\n.*?\n'''"
+    },
+    "c" : {
+      "shell_cmd" : "python -u ${file}",
+      "input_start" : "'''input",
+      "input_end" : "'''",
+      "comment_regex" : "'''input\\s*\n.*?\n'''"
+    }
+  }
+}

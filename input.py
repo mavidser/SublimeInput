@@ -22,7 +22,7 @@ class ProcessListener(object):
 # Encapsulates subprocess.Popen, forwarding stdout to a supplied
 # ProcessListener (on a separate thread)
 class AsyncProcess(object):
-  def __init__(self, cmd, shell_cmd, env, listener,
+  def __init__(self, cmd, shell_cmd, user_input, env, listener,
                # "path" is an option in build systems
                path="",
                # "shell" is an options in build systems
@@ -57,23 +57,29 @@ class AsyncProcess(object):
     for k, v in proc_env.items():
       proc_env[k] = os.path.expandvars(v)
 
+    if user_input:
+      echo_input = subprocess.Popen('echo "' + user_input + '"', 
+                                    stderr=subprocess.STDOUT,
+                                    stdout=subprocess.PIPE,
+                                    shell=True)
+
     if shell_cmd and sys.platform == "win32":
       # Use shell=True on Windows, so shell_cmd is passed through with the correct escaping
-      self.proc = subprocess.Popen(shell_cmd, stdout=subprocess.PIPE,
+      self.proc = subprocess.Popen(shell_cmd, stdin=echo_input.stdout, stdout=subprocess.PIPE,
           stderr=subprocess.PIPE, startupinfo=startupinfo, env=proc_env, shell=True)
     elif shell_cmd and sys.platform == "darwin":
       # Use a login shell on OSX, otherwise the users expected env vars won't be setup
-      self.proc = subprocess.Popen(["/bin/bash", "-l", "-c", shell_cmd], stdout=subprocess.PIPE,
+      self.proc = subprocess.Popen(["/bin/bash", "-l", "-c", shell_cmd], stdin=echo_input.stdout, stdout=subprocess.PIPE,
           stderr=subprocess.PIPE, startupinfo=startupinfo, env=proc_env, shell=False)
     elif shell_cmd and sys.platform == "linux":
       # Explicitly use /bin/bash on Linux, to keep Linux and OSX as
       # similar as possible. A login shell is explicitly not used for
       # linux, as it's not required
-      self.proc = subprocess.Popen(["/bin/bash", "-c", shell_cmd], stdout=subprocess.PIPE,
+      self.proc = subprocess.Popen(["/bin/bash", "-c", shell_cmd], stdin=echo_input.stdout, stdout=subprocess.PIPE,
           stderr=subprocess.PIPE, startupinfo=startupinfo, env=proc_env, shell=False)
     else:
       # Old style build system, just do what it asks
-      self.proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+      self.proc = subprocess.Popen(cmd, stdin=echo_input.stdout, stdout=subprocess.PIPE,
           stderr=subprocess.PIPE, startupinfo=startupinfo, env=proc_env, shell=shell)
 
     if path:
@@ -136,14 +142,26 @@ class InputCommand(sublime_plugin.TextCommand, ProcessListener):
           # Catches "path" and "shell"
           **kwargs):
     self.window = self.view.window()
-    self.file_name = self.view.file_name()
-    self.filetype = self.file_name[self.file_name.rfind('.') + 1:]
-    print("a",self.filetype)
-    
-    self.file_name_only = self.file_name[:self.file_name.rfind('.')]
-    
-    working_dir = self.file_name[:self.file_name.rfind('/')+1]
-    print("a",working_dir)
+    file_name = self.view.file_name()
+    filetype = file_name[file_name.rfind('.') + 1:]
+    file_name_only = file_name[file_name.rfind('/')+1:file_name.rfind('.')]
+    working_dir = file_name[:file_name.rfind('/')+1]
+
+    settings = sublime.load_settings("SublimeInput.sublime-settings")
+    shell_cmd = settings.get('build_schemas')[filetype]['shell_cmd']
+    input_start = settings.get('build_schemas')[filetype]['input_start']
+    input_end = settings.get('build_schemas')[filetype]['input_end']
+    shell_cmd = shell_cmd.replace('${file}',file_name)
+    shell_cmd = shell_cmd.replace('${file_path}',working_dir)
+    shell_cmd = shell_cmd.replace('${file_base_name}',file_name_only)
+    shell_cmd = shell_cmd.replace('${file_extension}',filetype)
+
+    line = self.view.substr(sublime.Region(0, self.view.size()))
+
+    comment_regex = re.escape(input_start) + "\\s*\n.*?\n" + re.escape(input_end)
+    user_input = re.match(comment_regex, line, flags=re.S).group(0)[len(input_start)+1:-(len(input_end)+1)]
+
+    print(user_input)
     if kill:
       if self.proc:
         self.proc.kill()
@@ -212,7 +230,7 @@ class InputCommand(sublime_plugin.TextCommand, ProcessListener):
 
     try:
       # Forward kwargs to AsyncProcess
-      self.proc = AsyncProcess(cmd, shell_cmd, merged_env, self, **kwargs)
+      self.proc = AsyncProcess(cmd, shell_cmd, user_input, merged_env, self, **kwargs)
     except Exception as e:
       self.append_string(None, str(e) + "\n")
       self.append_string(None, self.debug_text + "\n")
@@ -274,104 +292,3 @@ class InputCommand(sublime_plugin.TextCommand, ProcessListener):
 
   def on_finished(self, proc):
     sublime.set_timeout(functools.partial(self.finish, proc), 0)
-
-
-class InputtCommand(sublime_plugin.TextCommand):
-  def run(self, edit):
-    file_name = self.view.file_name()
-
-    print(file_name)
-    filetype = file_name[file_name.rfind('.') + 1:]
-    file_name_only = file_name[:file_name.rfind('.')]
-    line = self.view.substr(sublime.Region(0, self.view.size()))
-    if filetype == 'cpp':
-      try:
-        user_input = re.match('/\*input\s*\n.*?\n\*/', line, flags=re.S).group(0)[8:-3]
-        output = self.view.window().create_output_panel('op')
-        output.run_command('erase_view')
-        try:
-          result = subprocess.check_output('g++ ' + file_name + ' -o ' + file_name_only,
-                                           stderr=subprocess.STDOUT,
-                                           shell=True)
-          try:
-            print('echo "' + user_input + '" |' + file_name_only)
-            result = subprocess.check_output('echo "' + user_input + '" |' + file_name_only,
-                                             stderr=subprocess.STDOUT,
-                                             shell=True)
-            output.run_command('append', {'characters': result.decode(sys.getfilesystemencoding())})
-          except subprocess.CalledProcessError as err:
-            print(err.returncode, err.output.decode(sys.getfilesystemencoding()))
-            output.run_command('append', {'characters': err.output.decode(sys.getfilesystemencoding())})
-        except subprocess.CalledProcessError as err:
-          print(err.returncode, err.output.decode(sys.getfilesystemencoding()))
-          output.run_command('append', {'characters': err.output.decode(sys.getfilesystemencoding())})
-        self.view.window().run_command("show_panel", {"panel": "output.op"})
-      except AttributeError as err:
-        print(err)
-    elif filetype == 'c':
-      try:
-        user_input = re.match('/\*input\s*\n.*?\n\*/', line, flags=re.S).group(0)[8:-3]
-        output = self.view.window().create_output_panel('op')
-        output.run_command('erase_view')
-        try:
-          result = subprocess.check_output('gcc ' + file_name + ' -o ' + file_name_only,
-                                           stderr=subprocess.STDOUT,
-                                           shell=True)
-          try:
-            print('echo "' + user_input + '" |' + file_name_only)
-            result = subprocess.check_output('echo "' + user_input + '" |' + file_name_only,
-                                             stderr=subprocess.STDOUT,
-                                             shell=True)
-            output.run_command('append', {'characters': result.decode(sys.getfilesystemencoding())})
-          except subprocess.CalledProcessError as err:
-            print(err.returncode, err.output.decode(sys.getfilesystemencoding()))
-            output.run_command('append', {'characters': err.output.decode(sys.getfilesystemencoding())})
-        except subprocess.CalledProcessError as err:
-          print(err.returncode, err.output.decode(sys.getfilesystemencoding()))
-          output.run_command('append', {'characters': err.output.decode(sys.getfilesystemencoding())})
-        self.view.window().run_command("show_panel", {"panel": "output.op"})
-      except AttributeError as err:
-        print(err)
-    elif filetype == 'py':
-      try:
-        user_input = re.match("'''input\s*\n.*?\n'''", line, flags=re.S).group(0)[9:-4]
-        output = self.view.window().create_output_panel('op')
-        output.run_command('erase_view')
-        try:
-          echo_input = subprocess.Popen('echo "' + user_input + '"', 
-                                          stderr=subprocess.STDOUT,
-                                          stdout=subprocess.PIPE,
-                                          shell=True)
-          result = subprocess.Popen('python ' + file_name,
-                                           stdin=echo_input.stdout,
-                                           stderr=subprocess.STDOUT,
-                                           stdout=subprocess.PIPE,
-                                           shell=True)
-
-          while True:
-            data = os.read(result.stdout.fileno(), 2**15)
-            if len(data) > 0:
-              output.run_command('append', {'characters': data.decode('utf-8')})
-              # if self.listener:
-              #   on_data(self, data)
-            else:
-              # self.proc.stdout.close()
-              # if self.listener:
-              #   on_finished(self)
-              break
-          # while True:
-          #   out = result.stdout.read(1)
-          #   if out == b'' and result.poll() != None:
-          #     break
-          #   if out != '':
-          #     output.run_command('append', {'characters': out.decode('utf-8')})
-        except subprocess.CalledProcessError as err:
-          print(err.returncode, err.output.decode(sys.getfilesystemencoding()))
-          output.run_command('append', {'characters': err.output.decode(sys.getfilesystemencoding())})
-        self.view.window().run_command("show_panel", {"panel": "output.op"})
-      except AttributeError as err:
-        print(err)
-
-# class InputCommand(sublime_plugin.WindowCommand, ProcessListener):
-#   def run(self, shell_cmd = None, file_regex = "", selector = ""):
-#     self.window.run_command("build", {"shell_cmd":"python -u \"test.py\"","file_regex":"^[ ]*File \"(...*?)\", line ([0-9]*)"})
