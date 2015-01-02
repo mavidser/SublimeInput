@@ -61,6 +61,7 @@ class AsyncProcess(object):
       # Since, Windows doesn't allow multiline echo, create concatenated echo statements
       split_input = user_input.split('\n')
       parsed_user_input = ""
+      print(shell_cmd)
       for i in split_input:
         parsed_user_input +='echo '+i+"&"
       parsed_user_input=parsed_user_input[0:-1]
@@ -160,7 +161,13 @@ class SublimeInputCommand(sublime_plugin.TextCommand, ProcessListener):
     working_dir = file_name[:file_name.rfind('/')+1]
     file_name_sanitized = quote_filename(file_name)
     working_dir_sanitized = quote_filename(working_dir)
-    print(file_name,filetype, file_name_only, working_dir)
+    # Backslash directory separators in Windows
+    if sys.platform == "win32":
+      file_name_only = file_name[file_name.rfind('\\')+1:file_name.rfind('.')]
+      working_dir = file_name[:file_name.rfind('\\')+1]
+      file_name_sanitized = file_name
+      working_dir_sanitized = working_dir
+
     user_input = ''
     try:
       settings = sublime.load_settings("SublimeInput.sublime-settings")
