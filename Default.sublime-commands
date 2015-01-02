@@ -1,6 +1,24 @@
 [
   {
-    "caption": "SublimeInput: Run Program with Input",
-    "command": "input"
+    "caption": "SublimeInput: Build",
+    "command": "sublime_input"
+  },
+  {
+    "caption": "SublimeInput: Cancel Build",
+    "command": "cancel_sublime_input"
+  },
+  {
+    "caption": "Preferences: SublimeInput Settings – Default",
+    "command": "open_file", "args":
+    {
+      "file": "${packages}/SublimeInput/SublimeInput.sublime-settings"
+    }
+  },
+  {
+    "caption": "Preferences: SublimeInput Settings – User",
+    "command": "open_file", "args":
+    {
+      "file": "${packages}/User/SublimeInput.sublime-settings"
+    }
   }
 ]
