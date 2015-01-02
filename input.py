@@ -3,7 +3,7 @@ import subprocess
 import threading
 import functools
 import time
-import re
+import re, shlex
 import os, sys
 
 class ProcessListener(object):
@@ -51,13 +51,23 @@ class AsyncProcess(object):
     for k, v in proc_env.items():
       proc_env[k] = os.path.expandvars(v)
 
-    if user_input:
+    if shell_cmd and not sys.platform == "win32":
       echo_input = subprocess.Popen('echo "' + user_input + '"', 
                                     stderr=subprocess.STDOUT,
                                     stdout=subprocess.PIPE,
                                     shell=True)
 
     if shell_cmd and sys.platform == "win32":
+      # Since, Windows doesn't allow multiline echo, create concatenated echo statements
+      split_input = user_input.split('\n')
+      parsed_user_input = ""
+      for i in split_input:
+        parsed_user_input +='echo '+i+"&"
+      parsed_user_input=parsed_user_input[0:-1]
+      echo_input = subprocess.Popen(parsed_user_input,
+                                  stderr=subprocess.STDOUT,
+                                  stdout=subprocess.PIPE,
+                                  shell=True)
       # Use shell=True on Windows, so shell_cmd is passed through with the correct escaping
       self.proc = subprocess.Popen(shell_cmd, stdin=echo_input.stdout, stdout=subprocess.PIPE,
           stderr=subprocess.PIPE, startupinfo=startupinfo, env=proc_env, shell=True)
@@ -155,6 +165,7 @@ class SublimeInputCommand(sublime_plugin.TextCommand, ProcessListener):
 
       comment_regex = re.escape(input_start) + "\\s*\n.*?\n" + re.escape(input_end)
       user_input = re.match(comment_regex, line, flags=re.S).group(0)[len(input_start)+1:-(len(input_end)+1)]
+      user_input = user_input.replace('\r\n', '\n').replace('\r', '\n')
     except:
       pass
 
