@@ -17,6 +17,12 @@
       "shell_cmd" : "gcc \"${file}\" -o \"${file_path}/${file_base_name}\" && \"${file_path}/${file_base_name}\"",
       "input_start" : "/*input",
       "input_end" : "*/"
+    },
+
+    "java" : {
+      "shell_cmd" : "javac \"${file}\" && java \"${file_base_name}\"",
+      "input_start" : "/*input",
+      "input_end" : "*/"
     }
 
   }
