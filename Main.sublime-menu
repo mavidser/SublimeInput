@@ -32,7 +32,7 @@
               {
                 "command": "open_file",
                 "args": {
-                  "file": "${packages}/SublimeInput/SublimeInput.sublime-settings"
+                  "file": "${packages}/Sublime Input/SublimeInput.sublime-settings"
                 },
                 "caption": "Settings - Default"
               },
