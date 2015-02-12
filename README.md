@@ -14,7 +14,7 @@ Sublime Input is a Sublime Text 2/3 plugin which gives STDIN input through comme
 
 1. Go to Preferences | Browse Packages
 2. Browse up a folder and then into the Installed Packages/ folder
-3. [Downlad and Copy the `Sublime Input.sublime-package` file](http://github.com/mavidser/SublimeInput/releases/download/2.2.0/Sublime.Input.sublime-package)
+3. [Downlad and Copy the `Sublime.Input.sublime-package` file](http://github.com/mavidser/SublimeInput/releases/download/2.2.0/Sublime.Input.sublime-package)
 4. Restart Sublime Text
 
 ### Usage
