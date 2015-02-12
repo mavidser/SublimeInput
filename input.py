@@ -25,7 +25,7 @@ class AsyncProcess(object):
     if not shell_cmd and not cmd:
       raise ValueError("shell_cmd or cmd is required")
 
-    if shell_cmd and not isinstance(shell_cmd, str):
+    if sys.version > '3' and (shell_cmd and not isinstance(shell_cmd, str)):
       raise ValueError("shell_cmd must be a string")
 
     self.listener = listener
@@ -76,7 +76,7 @@ class AsyncProcess(object):
       # Use a login shell on OSX, otherwise the users expected env vars won't be setup
       self.proc = subprocess.Popen(["/bin/bash", "-l", "-c", shell_cmd], stdin=echo_input.stdout, stdout=subprocess.PIPE,
           stderr=subprocess.PIPE, startupinfo=startupinfo, env=proc_env, shell=False)
-    elif shell_cmd and sys.platform == "linux":
+    elif shell_cmd and (sys.platform == "linux" or sys.platform == "linux2"  or sys.platform == "linux3"):
       # Explicitly use /bin/bash on Linux, to keep Linux and OSX as
       # similar as possible. A login shell is explicitly not used for
       # linux, as it's not required
@@ -196,7 +196,10 @@ class SublimeInputCommand(sublime_plugin.TextCommand, ProcessListener):
 
     if not hasattr(self, 'output_view'):
       # Try not to call get_output_panel until the regexes are assigned
-      self.output_view = self.window.create_output_panel("exec")
+      if sys.version > '3':
+        self.output_view = self.window.create_output_panel("exec")
+      else:
+        self.output_view = self.window.get_output_panel("exec")
 
     # Default the to the current files directory if no working directory was given
     if (working_dir == "" and self.window.active_view()
@@ -210,11 +213,16 @@ class SublimeInputCommand(sublime_plugin.TextCommand, ProcessListener):
     self.output_view.settings().set("line_numbers", False)
     self.output_view.settings().set("gutter", False)
     self.output_view.settings().set("scroll_past_end", False)
-    self.output_view.assign_syntax(syntax)
+    
+    if sys.version > '3':
+      self.output_view.assign_syntax(syntax)
 
     # Call create_output_panel a second time after assigning the above
     # settings, so that it'll be picked up as a result buffer
-    self.window.create_output_panel("exec")
+    if sys.version > '3':
+      self.window.create_output_panel("exec")
+    else:
+      self.window.get_output_panel("exec")
 
     self.encoding = encoding
     self.quiet = quiet
@@ -286,7 +294,19 @@ class SublimeInputCommand(sublime_plugin.TextCommand, ProcessListener):
     # in memory.
     str = str.replace('\r\n', '\n').replace('\r', '\n')
 
-    self.output_view.run_command('append', {'characters': str, 'force': True, 'scroll_to_end': True})
+    if sys.version > '3':
+      self.output_view.run_command('append', {'characters': str, 'force': True, 'scroll_to_end': True})
+    else:
+      selection_was_at_end = (len(self.output_view.sel()) == 1
+        and self.output_view.sel()[0]
+          == sublime.Region(self.output_view.size()))
+      self.output_view.set_read_only(False)
+      edit = self.output_view.begin_edit()
+      self.output_view.insert(edit, self.output_view.size(), str)
+      if selection_was_at_end:
+        self.output_view.show(self.output_view.size())
+      self.output_view.end_edit(edit)
+      self.output_view.set_read_only(True)
 
   def append_string(self, proc, str):
     self.append_data(proc, str.encode(self.encoding))
