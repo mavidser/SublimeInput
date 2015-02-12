@@ -9,7 +9,7 @@
       },
       {
         "caption": "SublimeInput - Cancel Build",
-        "command": "cancel_sublime_input",
+        "command": "cancel_sublime_input"
       }
     ]
   },  
