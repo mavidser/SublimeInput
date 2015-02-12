@@ -1,7 +1,9 @@
-# Sublime Input
-Sublime Input is a Sublime Text 3 plugin which gives STDIN input through comments to a program.
+Sublime Input
+-------------
 
-## Installation
+Sublime Input is a Sublime Text 2/3 plugin which gives STDIN input through comments to a program.
+
+### Installation
 **With the [Package Control plugin](https://packagecontrol.io/installation) (Recommended):**
 
 1. Bring up the Command Palette (Cmd+Shift+P on OS X, Ctrl+Shift+P on Linux/Windows). 
@@ -12,10 +14,10 @@ Sublime Input is a Sublime Text 3 plugin which gives STDIN input through comment
 
 1. Go to Preferences | Browse Packages
 2. Browse up a folder and then into the Installed Packages/ folder
-3. [Downlad and Copy the `SublimeInput.sublime-package` file](http://github.com/mavidser/SublimeInput/releases/download/2.0.1/SublimeInput.sublime-package)
+3. [Downlad and Copy the `Sublime Input.sublime-package` file](http://github.com/mavidser/SublimeInput/releases/download/2.2.0/Sublime Input.sublime-package)
 4. Restart Sublime Text
 
-## Usage
+### Usage
 Insert a multi-line comment at the top of program.
 
 Examples, using the default format:
@@ -56,7 +58,7 @@ foo
 bar
 ```
 
-## Configure
+### Configure
 Set the build schemas in Preferences: Package Settings > SublimeInput > Settings – User
 
 Example schema :
@@ -89,10 +91,10 @@ Example schema :
 
 The default schema can be found in Preferences: Package Settings > SublimeInput > Settings – Default
 
-## Keyboard Shortcuts
+### Keyboard Shortcuts
 - *Ctrl + Alt + B* - Build/Run program
 - *Ctrl + Alt + C* - Cancel the running pogram
 
-## Current Status
+### Current Status
 The Plugin is in active development. Windows users may encounter some bugs.
 
