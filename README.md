@@ -18,7 +18,8 @@ Installation
 3. [Downlad and Copy the `Sublime.Input.sublime-package` file](http://github.com/mavidser/SublimeInput/releases/download/2.2.0/Sublime.Input.sublime-package)
 4. Restart Sublime Text
 
-### Usage
+Usage
+-----
 Insert a multi-line comment at the top of program.
 
 Examples, using the default format:
@@ -59,7 +60,8 @@ foo
 bar
 ```
 
-### Configure
+Configure
+---------
 Set the build schemas in Preferences: Package Settings > SublimeInput > Settings – User
 
 Example schema :
@@ -98,10 +100,12 @@ The following schemas have been included by default:
 - Python
 - Java
 
-### Keyboard Shortcuts
+Keyboard Shortcuts
+------------------
 - *Ctrl + Alt + B* - Build/Run program
 - *Ctrl + Alt + C* - Cancel the running pogram
 
-### Current Status
+Current Status
+--------------
 The Plugin is in active development. Windows users may encounter some bugs.
 
