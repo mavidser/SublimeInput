@@ -1,9 +1,10 @@
 Sublime Input
--------------
+=============
 
 Sublime Input is a Sublime Text 2/3 plugin which gives STDIN input through comments to a program.
 
-### Installation
+Installation
+------------
 **With the [Package Control plugin](https://packagecontrol.io/installation) (Recommended):**
 
 1. Bring up the Command Palette (Cmd+Shift+P on OS X, Ctrl+Shift+P on Linux/Windows). 
@@ -90,6 +91,12 @@ Example schema :
 `input_end` stores the end of the input comment block.
 
 The default schema can be found in Preferences: Package Settings > SublimeInput > Settings – Default
+
+The following schemas have been included by default:
+- C
+- C++
+- Python
+- Java
 
 ### Keyboard Shortcuts
 - *Ctrl + Alt + B* - Build/Run program
