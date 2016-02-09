@@ -245,6 +245,10 @@ class SublimeInputCommand(sublime_plugin.TextCommand, ProcessListener):
       if user_env:
         merged_env.update(user_env)
 
+    # Save file if it exists on disk
+    if self.view.file_name():
+      self.view.run_command('save')
+
     # Change to the working dir, rather than spawning the process with it,
     # so that emitted working dir relative path names make sense
     if working_dir != "":
