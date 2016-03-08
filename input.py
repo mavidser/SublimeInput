@@ -5,6 +5,7 @@ import functools
 import time
 import re, shlex
 import os, sys
+import collections
 
 class ProcessListener(object):
   def on_data(self, proc, data):
@@ -141,6 +142,13 @@ class AsyncProcess(object):
 
 
 class SublimeInputCommand(sublime_plugin.TextCommand, ProcessListener):
+  BLOCK_SIZE = 2**14
+  text_queue = collections.deque()
+  text_queue_proc = None
+  text_queue_lock = threading.Lock()
+
+  proc = None
+
   def run(self, cmd = None, shell_cmd = None, file_regex = "", line_regex = "", working_dir = "",
           encoding = "utf-8", env = {}, quiet = False, kill = False,
           word_wrap = True, syntax = "Packages/Text/Plain text.tmLanguage",
@@ -186,6 +194,14 @@ class SublimeInputCommand(sublime_plugin.TextCommand, ProcessListener):
       user_input = user_input.replace('\r\n', '\n').replace('\r', '\n')
     except:
       pass
+
+    # clear the text_queue
+    self.text_queue_lock.acquire()
+    try:
+      self.text_queue.clear()
+      self.text_queue_proc = None
+    finally:
+      self.text_queue_lock.release()
 
     if kill:
       if self.proc:
@@ -268,6 +284,13 @@ class SublimeInputCommand(sublime_plugin.TextCommand, ProcessListener):
     try:
       # Forward kwargs to AsyncProcess
       self.proc = AsyncProcess(cmd, shell_cmd, user_input, merged_env, self, **kwargs)
+
+      self.text_queue_lock.acquire()
+      try:
+        self.text_queue_proc = self.proc
+      finally:
+        self.text_queue_lock.release()
+
     except Exception as e:
       self.append_string(None, str(e) + "\n")
       self.append_string(None, self.debug_text + "\n")
@@ -280,23 +303,50 @@ class SublimeInputCommand(sublime_plugin.TextCommand, ProcessListener):
     else:
       return True
 
-  def append_data(self, proc, data):
-    if proc != self.proc:
-      # a second call to exec has been made before the first one
-      # finished, ignore it instead of intermingling the output.
-      if proc:
-        proc.kill()
-      return
+  def append_string(self, proc, str):
+    self.text_queue_lock.acquire()
 
+    was_empty = False
     try:
-      str = data.decode(self.encoding)
-    except:
-      str = "[Decode error - output not " + self.encoding + "]\n"
-      proc = None
+      if proc != self.text_queue_proc:
+        # a second call to exec has been made before the first one
+        # finished, ignore it instead of intermingling the output.
+        if proc:
+          proc.kill()
+        return
 
-    # Normalize newlines, Sublime Text always uses a single \n separator
-    # in memory.
-    str = str.replace('\r\n', '\n').replace('\r', '\n')
+      if len(self.text_queue) == 0:
+        was_empty = True
+        self.text_queue.append("")
+
+      available = self.BLOCK_SIZE - len(self.text_queue[-1])
+
+      if len(str) < available:
+        cur = self.text_queue.pop()
+        self.text_queue.append(cur + str)
+      else:
+        self.text_queue.append(str)
+
+    finally:
+      self.text_queue_lock.release()
+
+    if was_empty:
+      sublime.set_timeout(self.service_text_queue, 0)
+
+  def service_text_queue(self):
+    self.text_queue_lock.acquire()
+
+    is_empty = False
+    try:
+      if len(self.text_queue) == 0:
+        # this can happen if a new build was started, which will clear
+        # the text_queue
+        return
+
+      str = self.text_queue.popleft()
+      is_empty = (len(self.text_queue) == 0)
+    finally:
+      self.text_queue_lock.release()
 
     if sys.version > '3':
       self.output_view.run_command('append', {'characters': str, 'force': True, 'scroll_to_end': True})
@@ -312,8 +362,9 @@ class SublimeInputCommand(sublime_plugin.TextCommand, ProcessListener):
       self.output_view.end_edit(edit)
       self.output_view.set_read_only(True)
 
-  def append_string(self, proc, str):
-    self.append_data(proc, str.encode(self.encoding))
+    if not is_empty:
+      sublime.set_timeout(self.service_text_queue, 1)
+
 
   def finish(self, proc):
     if not self.quiet:
@@ -337,7 +388,17 @@ class SublimeInputCommand(sublime_plugin.TextCommand, ProcessListener):
       sublime.status_message(("Build finished with %d errors") % len(errs))
 
   def on_data(self, proc, data):
-    sublime.set_timeout(functools.partial(self.append_data, proc, data), 0)
+    try:
+      str = data.decode(self.encoding)
+    except:
+      str = "[Decode error - output not " + self.encoding + "]\n"
+      proc = None
+
+    # Normalize newlines, Sublime Text always uses a single \n separator
+    # in memory.
+    str = str.replace('\r\n', '\n').replace('\r', '\n')
+
+    self.append_string(proc, str)
 
   def on_finished(self, proc):
     sublime.set_timeout(functools.partial(self.finish, proc), 0)
