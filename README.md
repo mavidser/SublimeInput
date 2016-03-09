@@ -15,8 +15,10 @@ Installation
 
 1. Go to Preferences | Browse Packages
 2. Browse up a folder and then into the Installed Packages/ folder
-3. [Downlad and Copy the `Sublime.Input.sublime-package` file](http://github.com/mavidser/SublimeInput/releases/download/3.1.0/Sublime.Input.sublime-package)
-4. Restart Sublime Text
+3. [Downlad and `Sublime.Input.sublime-package` file](http://github.com/mavidser/SublimeInput/releases/download/3.1.0/Sublime.Input.sublime-package)
+4. **Rename the `Sublime.Input.sublime-package` file to `Sublime Input.sublime-package`**
+5. Put the `Sublime Input.sublime-package` file in the Installed Packages/ folder
+6. Restart Sublime Text
 
 Usage
 -----
