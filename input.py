@@ -5,6 +5,7 @@ import functools
 import time
 import re, shlex
 import os, sys
+import signal
 import collections
 
 class ProcessListener(object):
@@ -76,13 +77,13 @@ class AsyncProcess(object):
     elif shell_cmd and sys.platform == "darwin":
       # Use a login shell on OSX, otherwise the users expected env vars won't be setup
       self.proc = subprocess.Popen(["/bin/bash", "-l", "-c", shell_cmd], stdin=echo_input.stdout, stdout=subprocess.PIPE,
-          stderr=subprocess.PIPE, startupinfo=startupinfo, env=proc_env, shell=False)
+          stderr=subprocess.PIPE, startupinfo=startupinfo, env=proc_env, preexec_fn=os.setsid, shell=False)
     elif shell_cmd and (sys.platform == "linux" or sys.platform == "linux2"  or sys.platform == "linux3"):
       # Explicitly use /bin/bash on Linux, to keep Linux and OSX as
       # similar as possible. A login shell is explicitly not used for
       # linux, as it's not required
       self.proc = subprocess.Popen(["/bin/bash", "-c", shell_cmd], stdin=echo_input.stdout, stdout=subprocess.PIPE,
-          stderr=subprocess.PIPE, startupinfo=startupinfo, env=proc_env, shell=False)
+          stderr=subprocess.PIPE, startupinfo=startupinfo, env=proc_env, preexec_fn=os.setsid, shell=False)
     else:
       # Old style build system, just do what it asks
       self.proc = subprocess.Popen(cmd, stdin=echo_input.stdout, stdout=subprocess.PIPE,
@@ -108,6 +109,7 @@ class AsyncProcess(object):
         subprocess.Popen("taskkill /PID " + str(self.proc.pid), startupinfo=startupinfo)
       else:
         self.proc.terminate()
+        os.killpg(os.getpgid(self.proc.pid), signal.SIGTERM)
       self.listener = None
 
   def poll(self):
