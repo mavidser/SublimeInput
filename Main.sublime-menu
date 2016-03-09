@@ -42,6 +42,57 @@
                     "file": "${packages}/User/SublimeInput.sublime-settings"
                 },
                 "caption": "Settings - User"
+              },
+              {
+                "caption": "-"
+              },
+              {
+                "command": "open_file",
+                "args": {
+                  "file": "${packages}/Sublime Input/Default (Windows).sublime-keymap",
+                  "platform": "Windows"
+                },
+                "caption": "Key Bindings – Default"
+              },
+              {
+                "command": "open_file",
+                "args": {
+                  "file": "${packages}/Sublime Input/Default (OSX).sublime-keymap",
+                  "platform": "OSX"
+                },
+                "caption": "Key Bindings – Default"
+              },
+              {
+                "command": "open_file",
+                "args": {
+                  "file": "${packages}/Sublime Input/Default (Linux).sublime-keymap",
+                  "platform": "Linux"
+                },
+                "caption": "Key Bindings – Default"
+              },
+              {
+                "command": "open_file",
+                "args": {
+                  "file": "${packages}/User/Default (Windows).sublime-keymap",
+                  "platform": "Windows"
+                },
+                "caption": "Key Bindings – User"
+              },
+              {
+                "command": "open_file",
+                "args": {
+                  "file": "${packages}/User/Default (OSX).sublime-keymap",
+                  "platform": "OSX"
+                },
+                "caption": "Key Bindings – User"
+              },
+              {
+                "command": "open_file",
+                "args": {
+                  "file": "${packages}/User/Default (Linux).sublime-keymap",
+                  "platform": "Linux"
+                },
+                "caption": "Key Bindings – User"
               }
             ]
           }

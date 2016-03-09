@@ -11,7 +11,7 @@
     "caption": "Preferences: SublimeInput Settings – Default",
     "command": "open_file", "args":
     {
-      "file": "${packages}/SublimeInput/SublimeInput.sublime-settings"
+      "file": "${packages}/Sublime Input/SublimeInput.sublime-settings"
     }
   },
   {
@@ -19,6 +19,54 @@
     "command": "open_file", "args":
     {
       "file": "${packages}/User/SublimeInput.sublime-settings"
+    }
+  },
+  {
+    "caption": "Preferences: SublimeInput Key Bindings – Default",
+    "command": "open_file", "args":
+    {
+      "file": "${packages}/Sublime Input/Default (Windows).sublime-keymap",
+      "platform": "Windows"
+    }
+  },
+  {
+    "caption": "Preferences: SublimeInput Key Bindings – User",
+    "command": "open_file", "args":
+    {
+      "file": "${packages}/User/Default (Windows).sublime-keymap",
+      "platform": "Windows"
+    }
+  },
+  {
+    "caption": "Preferences: SublimeInput Key Bindings – Default",
+    "command": "open_file", "args":
+    {
+      "file": "${packages}/Sublime Input/Default (Linux).sublime-keymap",
+      "platform": "Linux"
+    }
+  },
+  {
+    "caption": "Preferences: SublimeInput Key Bindings – User",
+    "command": "open_file", "args":
+    {
+      "file": "${packages}/User/Default (Linux).sublime-keymap",
+      "platform": "Linux"
+    }
+  },
+  {
+    "caption": "Preferences: SublimeInput Key Bindings – Default",
+    "command": "open_file", "args":
+    {
+      "file": "${packages}/Sublime Input/Default (OSX).sublime-keymap",
+      "platform": "OSX"
+    }
+  },
+  {
+    "caption": "Preferences: SublimeInput Key Bindings – User",
+    "command": "open_file", "args":
+    {
+      "file": "${packages}/User/Default (OSX).sublime-keymap",
+      "platform": "OSX"
     }
   }
 ]
