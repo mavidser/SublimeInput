@@ -191,7 +191,7 @@ class SublimeInputCommand(sublime_plugin.TextCommand, ProcessListener):
 
       line = self.view.substr(sublime.Region(0, self.view.size()))
 
-      line = re.sub(r'^#!.*?\n', '', line)
+      line = re.sub(r'^#!.*?\n+', '', line)
 
       comment_regex = re.escape(input_start) + "\\s*\n.*?\n" + re.escape(input_end)
       user_input = re.match(comment_regex, line, flags=re.S).group(0)[len(input_start)+1:-(len(input_end)+1)]
